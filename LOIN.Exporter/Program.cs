@@ -232,7 +232,7 @@ namespace LOIN.Exporter
                                     reason.SetName("en", record.Par01);
 
                                     // set name in other languages
-                                    reason.SetName("cs", "");
+                                    reason.SetName("cs", record.Par02);
                                 }
                                 reason.AddToContext(currentRequirementsSet);
                             }
@@ -259,8 +259,8 @@ namespace LOIN.Exporter
                                 // Milestone = point in time
                                 if (!milestonesCache.TryGetValue(record.Id, out Milestone milestone))
                                 {
-                                    milestone = model.CreateMilestone(record.Par01, null);
-                                    milestone.Entity.IsMilestone = record.Par02 == "true";
+                                    milestone = model.CreateMilestone(record.Par02, null);
+                                    milestone.Entity.IsMilestone = record.Par03 == "true";
 
                                     if (record.GlobalId != "")
                                         milestone.Entity.GlobalId = record.GlobalId;
@@ -270,7 +270,7 @@ namespace LOIN.Exporter
                                     milestone.SetName("en", record.Par01);
 
                                     // set name in other languages
-                                    milestone.SetName("cs", "");
+                                    milestone.SetName("cs", record.Par02);
                                 }
                                 milestone.AddToContext(currentRequirementsSet);
                             }
@@ -279,7 +279,7 @@ namespace LOIN.Exporter
                                 // Class within classification
                                 // Set parent
                                 BreakdownItem parent = null;
-                                if (record.Par03 == "")
+                                if (record.Par04 == "")
                                     //Program.ifcCRS = Program.ifcCL; // classification for root class
                                     parent = breakedownRootMap[record.Par09]; // classification for root class
                                 else
@@ -287,14 +287,14 @@ namespace LOIN.Exporter
                                 // Optionally add new class
                                 if (!breakedownMap.ContainsKey(record.Id))
                                 {
-                                    var item = model.CreateBreakedownItem(record.Par01, record.Par02, null, parent);
+                                    var item = model.CreateBreakedownItem(record.Par02, record.Par03, null, parent);
                                     breakedownMap.Add(record.Id, item);
 
                                     // set name in default language
                                     item.SetName("en", record.Par01);
 
                                     // set name in other languages
-                                    item.SetName("cs", "");
+                                    item.SetName("cs", record.Par02);
                                 };
                             }
                             else if (record.Method == "IfcRelAssociatesClassification")
@@ -303,7 +303,7 @@ namespace LOIN.Exporter
                             }
                             else if (record.Method == "IfcRelDeclares")
                             {
-                               // nothing to do, handled by LOIN library
+                                // nothing to do, handled by LOIN library
                             }
                             else if (record.Method == "IfcPropertySetTemplate")
                             {
@@ -322,7 +322,7 @@ namespace LOIN.Exporter
                                     currentPropertySet.SetName("en", record.Par01);
 
                                     // set name in other languages
-                                    currentPropertySet.SetName("cs", "");
+                                    currentPropertySet.SetName("cs", record.Par02);
 
                                     //ApplicableEntity
                                     //Description
@@ -331,10 +331,10 @@ namespace LOIN.Exporter
                                         currentPropertySet.Description = record.Par02;
 
                                         // set name in default language
-                                        currentPropertySet.SetDescription("en", record.Par02);
+                                        currentPropertySet.SetDescription("en", record.Par03);
 
                                         // set name in other languages
-                                        currentPropertySet.SetDescription("cs", "");
+                                        currentPropertySet.SetDescription("cs", record.Par04);
                                     }
                                     if (record.GlobalId != "")
                                         currentPropertySet.GlobalId = record.GlobalId;
@@ -362,16 +362,16 @@ namespace LOIN.Exporter
                                             propertyTemplate.GlobalId = record.GlobalId;
                                         //Description
                                         if (record.Par02 != "")
-                                        { 
+                                        {
                                             propertyTemplate.Description = record.Par02;
-                                            
+
                                             // Set description in primary language
-                                            propertyTemplate.SetDescription("en", record.Par02);
+                                            propertyTemplate.SetDescription("en", record.Par08);
 
                                             // Set description in other languages
-                                            propertyTemplate.SetDescription("cs", "");
+                                            propertyTemplate.SetDescription("cs", record.Par02);
                                         }
-                                        
+
                                         if (record.Par03 != "") // dataunit
                                             propertyTemplate.PrimaryUnit = units[record.Par03];
                                         if (record.Par04 != "") // nameof(X) -> "X"
