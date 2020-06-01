@@ -327,12 +327,22 @@ namespace LOIN.Exporter
 
                                     //ApplicableEntity
                                     //Description
-                                    if (record.Par02 != "")
+                                    if (record.Par03 != "")
                                     {
-                                        currentPropertySet.Description = record.Par02;
+                                        currentPropertySet.Description = record.Par03;
 
                                         // set name in default language
                                         currentPropertySet.SetDescription("en", record.Par03);
+
+                                        // set name in other languages
+                                        currentPropertySet.SetDescription("cs", record.Par04);
+                                    }
+                                    else if (record.Par04 != "")
+                                    {
+                                        currentPropertySet.Description = record.Par04;
+
+                                        // set name in default language
+                                        currentPropertySet.SetDescription("en", "");
 
                                         // set name in other languages
                                         currentPropertySet.SetDescription("cs", record.Par04);
@@ -351,23 +361,33 @@ namespace LOIN.Exporter
                                     {
                                         propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
                                         {
-                                            p.Name = record.Par01; // "Název"
+                                            p.Name = record.Par08; // "Název EN"
 
                                             // Set description in primary language
-                                            p.SetName("en", record.Par01);
+                                            p.SetName("en", record.Par08);
 
                                             // Set description in other languages
-                                            p.SetName("cs", "");
+                                            p.SetName("cs", record.Par01);
                                         });
                                         if (record.GlobalId != "")
                                             propertyTemplate.GlobalId = record.GlobalId;
                                         //Description
-                                        if (record.Par02 != "")
+                                        if (record.Par09 != "")
+                                        {
+                                            propertyTemplate.Description = record.Par09;
+
+                                            // Set description in primary language
+                                            propertyTemplate.SetDescription("en", record.Par09);
+
+                                            // Set description in other languages
+                                            propertyTemplate.SetDescription("cs", record.Par02);
+                                        }
+                                        else if (record.Par02 != "")
                                         {
                                             propertyTemplate.Description = record.Par02;
 
                                             // Set description in primary language
-                                            propertyTemplate.SetDescription("en", record.Par08);
+                                            propertyTemplate.SetDescription("en", "");
 
                                             // Set description in other languages
                                             propertyTemplate.SetDescription("cs", record.Par02);
