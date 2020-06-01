@@ -235,6 +235,7 @@ namespace LOIN.Exporter
                             e.Exponent = 1;
                         }),
                     });
+                    du.UserDefinedType = "kVA";
                 });
                 _unitsMap.Add("kVA", unit);
             }

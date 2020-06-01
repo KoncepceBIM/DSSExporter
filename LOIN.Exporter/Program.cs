@@ -158,7 +158,7 @@ namespace LOIN.Exporter
                    .CreateLogger();
                 XbimLogging.LoggerFactory.AddSerilog();
 
-                //using (var model = IfcStore.Create(editor, XbimSchemaVersion.Ifc4, XbimStoreType.InMemoryModel)) // OLD VERSION
+                IfcStore.ModelProviderFactory.UseMemoryModelProvider();
                 using (var model = Model.Create(editor))
                 {
                     //var i = model.Internal.Instances;

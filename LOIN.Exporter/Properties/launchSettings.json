@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LOIN.Exporter": {
+      "commandName": "Project",
+      "commandLineArgs": "result.ifc validate"
+    }
+  }
+}
