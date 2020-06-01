@@ -13,6 +13,7 @@ using CsvHelper;
 using LOIN.Validation;
 using LOIN.Context;
 using LOIN.Requirements;
+using System.Globalization;
 
 namespace LOIN.Exporter
 {
@@ -102,9 +103,9 @@ namespace LOIN.Exporter
             actorMap = new Dictionary<string, Actor>(); // prazdna mapa IfcRelAssignsToActor, bude plnena postupne
             milestonesCache = new Dictionary<int, Milestone>(); // prazdna mapa IfcRelAssignsToProcess, bude plnena postupne
 
-            //using (var reader = new StreamReader("xBimFile.csv"))
+            //using (var reader = new StreamReader("sfdi_export.csv"))
             using (var reader = new StreamReader(Console.OpenStandardInput()))
-            using (var csv = new CsvReader(reader))
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
 
                 var records = new List<RecordLine>();
