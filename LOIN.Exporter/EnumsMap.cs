@@ -10,7 +10,10 @@ namespace LOIN.Exporter
 {
     internal class EnumsMap
     {
-        private readonly Dictionary<string, IfcPropertyEnumeration> _cache = new Dictionary<string, IfcPropertyEnumeration>();
+        private static readonly StringComparer comparer = StringComparer.OrdinalIgnoreCase;
+
+        private readonly Dictionary<string, IfcPropertyEnumeration> _cache = 
+            new Dictionary<string, IfcPropertyEnumeration>(comparer);
         private readonly IModel _model;
 
         public EnumsMap(LOIN.Model model)
@@ -45,14 +48,20 @@ namespace LOIN.Exporter
             if (_cache.TryGetValue(key, out IfcPropertyEnumeration result))
             {
                 var hash = new HashSet<string>(values);
-                if (result.Name == name && result.EnumerationValues.Select(v => v.ToString()).All(v => hash.Contains(v)))
+                if (!comparer.Equals(result.Name,name))  
                 {
-                    return result;
+                    throw new Exception($"IfcPropertyEnumeration with key {key} already exists but has different name {name}/{result.Name}");
                 }
-                else
-                {
-                    throw new Exception($"IfcPropertyEnumeration with key {key} already exists but has different name {name}/{result.Name} and/or values [{string.Join(',', values)}]/[{string.Join(',', hash)}]");
-                }
+
+                // make sure enumeration values are merged if needed
+                var enumerationValues = result.EnumerationValues
+                    .Select(v => v.ToString())
+                    .Union(values, comparer)
+                    .Select(e => new IfcLabel(e))
+                    .Cast<IfcValue>();
+                result.EnumerationValues.Clear();
+                result.EnumerationValues.AddRange(enumerationValues);
+                return result;
             }
 
             var enumValues = values.Select(v => new IfcLabel(v)).Cast<IfcValue>();
