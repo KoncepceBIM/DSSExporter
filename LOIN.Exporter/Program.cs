@@ -210,7 +210,7 @@ namespace LOIN.Exporter
                             else if (record.Method == "IfcProjectLibrary")
                             {
                                 currentRequirementsSet = model.CreateRequirementSet(record.Par01, null); // "Level of Information Need"
-                                if (record.GlobalId != "")
+                                if (!string.IsNullOrWhiteSpace(record.GlobalId))
                                     currentRequirementsSet.Entity.GlobalId = record.GlobalId;
 
                                 // set name in default language
@@ -224,8 +224,8 @@ namespace LOIN.Exporter
                                 // Purpose of the data requirement/exchange
                                 if (!reasonsMap.TryGetValue(record.Id, out Reason reason))
                                 {
-                                    reason = model.CreateReason(record.Par01, record.Par02);
-                                    if (record.GlobalId != "")
+                                    reason = model.CreatePurpose(record.Par01, record.Par02);
+                                    if (!string.IsNullOrWhiteSpace(record.GlobalId))
                                         reason.Entity.GlobalId = record.GlobalId;
                                     reasonsMap.Add(record.Id, reason);
 
@@ -243,7 +243,7 @@ namespace LOIN.Exporter
                                 if (!actorMap.TryGetValue(record.GlobalId, out Actor actor))
                                 {
                                     actor = model.CreateActor(record.Par01, null);
-                                    if (record.GlobalId != "")
+                                    if (!string.IsNullOrWhiteSpace(record.GlobalId))
                                         actor.Entity.GlobalId = record.GlobalId;
                                     actorMap.Add(record.GlobalId, actor);
 
@@ -253,7 +253,12 @@ namespace LOIN.Exporter
                                     // set name in other languages
                                     actor.SetName("cs", "");
                                 }
-                                actor.AddToContext(currentRequirementsSet);
+
+                                // For the actor who requires the information:
+                                actor.AddToContext(currentRequirementsSet, IfcRoleEnum.CLIENT);
+
+                                // For the actor who should supply the information:
+                                // actor.AddToContext(currentRequirementsSet, IfcRoleEnum.SUPPLIER);
                             }
                             else if (record.Method == "IfcRelAssignsToProcess")
                             {
@@ -263,7 +268,7 @@ namespace LOIN.Exporter
                                     milestone = model.CreateMilestone(record.Par02, null);
                                     milestone.Entity.IsMilestone = record.Par03 == "true";
 
-                                    if (record.GlobalId != "")
+                                    if (!string.IsNullOrWhiteSpace(record.GlobalId))
                                         milestone.Entity.GlobalId = record.GlobalId;
                                     milestonesCache.Add(record.Id, milestone);
 
@@ -369,7 +374,7 @@ namespace LOIN.Exporter
                                             // Set description in other languages
                                             p.SetName("cs", record.Par01);
                                         });
-                                        if (record.GlobalId != "")
+                                        if (!string.IsNullOrWhiteSpace(record.GlobalId))
                                             propertyTemplate.GlobalId = record.GlobalId;
                                         //Description
                                         if (record.Par09 != "")
