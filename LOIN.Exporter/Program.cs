@@ -322,28 +322,32 @@ namespace LOIN.Exporter
                                 else
                                 {
                                     PropertySetReused = false;
-                                    currentPropertySet = model.CreatePropertySetTemplate(record.Par01, null); // "Základní informace o místnostech"
 
-                                    // set name in default language
+                                    // set name and description (IFC name and definition)
+                                    currentPropertySet = model.CreatePropertySetTemplate(record.Par01, null);
+
+                                    // set name in English
                                     currentPropertySet.SetName("en", record.Par01);
 
-                                    // set name in other languages
+                                    // set name in Czech
                                     currentPropertySet.SetName("cs", record.Par02);
 
                                     //ApplicableEntity
                                     //Description
                                     if (record.Par03 != "")
                                     {
+                                        // set description in IFC
                                         currentPropertySet.Description = record.Par03;
 
-                                        // set name in default language
+                                        // set description in English
                                         currentPropertySet.SetDescription("en", record.Par03);
 
-                                        // set name in other languages
+                                        // set description in Czech
                                         currentPropertySet.SetDescription("cs", record.Par04);
                                     }
                                     else if (record.Par04 != "")
                                     {
+                                        // set IFC description
                                         currentPropertySet.Description = record.Par04;
 
                                         // set name in default language
@@ -366,7 +370,8 @@ namespace LOIN.Exporter
                                     {
                                         propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
                                         {
-                                            p.Name = record.Par08; // "Název EN"
+                                            // Set IFC name (often CamelCase or other txt transform)
+                                            p.Name = record.Par08;
 
                                             // Set description in primary language
                                             p.SetName("en", record.Par08);
@@ -418,6 +423,24 @@ namespace LOIN.Exporter
                                             case "P_BOUNDEDVALUE":
                                                 propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_BOUNDEDVALUE;
                                                 break;
+                                            case "Q_LENGTH":
+                                                propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_LENGTH;
+                                                break;
+                                            case "Q_AREA":
+                                                propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_AREA;
+                                                break;
+                                            case "Q_VOLUME":
+                                                propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_VOLUME;
+                                                break;
+                                            case "Q_COUNT":
+                                                propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_COUNT;
+                                                break;
+                                            case "Q_WEIGHT":
+                                                propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_WEIGHT;
+                                                break;
+                                            case "Q_TIME":
+                                                propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_TIME;
+                                                break;
                                             default:
                                                 Console.WriteLine("IfcSimplePropertyTemplate: UNKNOWN TEMPLATE TYPE ", record.Par05);
                                                 //Program.ifcSPT.TemplateType = ...
@@ -460,9 +483,11 @@ namespace LOIN.Exporter
                             else if (record.Method == "IfcDocumentReference")
                             {
                                 // Declared data requirements / templates
-                                model.New<IfcRelAssociatesDocument>(rd => {
+                                model.New<IfcRelAssociatesDocument>(rd =>
+                                {
                                     rd.RelatedObjects.Add(currentPropertyTemplate);
-                                    rd.RelatingDocument = model.New<IfcDocumentReference>(doc => {
+                                    rd.RelatingDocument = model.New<IfcDocumentReference>(doc =>
+                                    {
                                         doc.Identification = record.Par01; // "Vyhláška č. 441/2013 Sb."
                                         doc.Location = record.Par02; // "https://www.mfcr.cz/cs/legislativa/legislativni-dokumenty/2013/vyhlaska-c-441-2013-sb-16290"
                                         doc.Name = record.Par03; // "Vyhláška k provedení zákona o oceňování majetku (oceňovací vyhláška)"
