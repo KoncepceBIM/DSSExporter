@@ -33,6 +33,8 @@ namespace LOIN.Exporter
         public string Par07 { get; set; }
         public string Par08 { get; set; }
         public string Par09 { get; set; }
+        public string Ifc01 { get; set; }
+        public string Ifc02 { get; set; }
     }
 
     class Program
@@ -128,7 +130,9 @@ namespace LOIN.Exporter
                     Par06 = csv.GetField("Par06"),
                     Par07 = csv.GetField("Par07"),
                     Par08 = csv.GetField("Par08"),
-                    Par09 = csv.GetField("Par09")
+                    Par09 = csv.GetField("Par09"),
+                    Ifc01 = csv.GetField("Ifc01"),
+                    Ifc02 = csv.GetField("Ifc02"),
                 };
                 records.Add(record);
 
@@ -190,7 +194,9 @@ namespace LOIN.Exporter
                                 Par06 = csv.GetField("Par06"),
                                 Par07 = csv.GetField("Par07"),
                                 Par08 = csv.GetField("Par08"),
-                                Par09 = csv.GetField("Par09")
+                                Par09 = csv.GetField("Par09"),
+                                Ifc01 = csv.GetField("Ifc01"),
+                                Ifc02 = csv.GetField("Ifc02"),
                             };
                             records.Add(record);
                             //Console.WriteLine(record.Method);
@@ -248,17 +254,18 @@ namespace LOIN.Exporter
                                     actorMap.Add(record.GlobalId, actor);
 
                                     // set name in default language
-                                    actor.SetName("en", record.Par01);
+                                    actor.SetName("en", ((record.Par02 == "") ? record.Par01 : record.Par02));
 
                                     // set name in other languages
-                                    actor.SetName("cs", "");
+                                    actor.SetName("cs", record.Par01);
                                 }
 
-                                // For the actor who requires the information:
-                                actor.AddToContext(currentRequirementsSet, IfcRoleEnum.CLIENT);
-
-                                // For the actor who should supply the information:
-                                // actor.AddToContext(currentRequirementsSet, IfcRoleEnum.SUPPLIER);
+                                if (record.Par03 == "IfcRoleEnum.SUPPLIER")
+                                    // For the actor who should supply the information:
+                                    actor.AddToContext(currentRequirementsSet, IfcRoleEnum.SUPPLIER);
+                                else // if (record.Par03 == "IfcRoleEnum.CLIENT")
+                                     // For the actor who requires the information:
+                                    actor.AddToContext(currentRequirementsSet, IfcRoleEnum.CLIENT);
                             }
                             else if (record.Method == "IfcRelAssignsToProcess")
                             {
@@ -371,7 +378,7 @@ namespace LOIN.Exporter
                                         propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
                                         {
                                             // Set IFC name (often CamelCase or other txt transform)
-                                            p.Name = record.Par08;
+                                            p.Name = ((record.Ifc02 == "") ? record.Par08 : record.Ifc02); // record.Par08;
 
                                             // Set description in primary language
                                             p.SetName("en", record.Par08);
