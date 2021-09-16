@@ -410,6 +410,12 @@ namespace LOIN.Exporter
                                     propertyTemplate.SetDescription("cs", record.Par02);
                                 }
 
+                                if (false)
+                                {
+                                    var example = "Example value";
+                                    propertyTemplate.SetExample(currentPropertySet, new IfcText(example));
+                                }
+
                                 if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
                                     propertyTemplate.PrimaryUnit = units[record.Par03];
                                 if (!string.IsNullOrWhiteSpace(record.Par04)) // nameof(X) -> "X"
@@ -449,6 +455,7 @@ namespace LOIN.Exporter
                                         propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_TIME;
                                         break;
                                     default:
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_SINGLEVALUE;
                                         Console.WriteLine("IfcSimplePropertyTemplate: UNKNOWN TEMPLATE TYPE ", record.Par05);
                                         //Program.ifcSPT.TemplateType = ...
                                         break;
