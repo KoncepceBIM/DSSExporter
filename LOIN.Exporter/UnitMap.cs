@@ -119,6 +119,23 @@ namespace LOIN.Exporter
                 });
                 _unitsMap.Add("m2", unit);
             }
+            {   //cubic metre
+                var unit = i.New<IfcSIUnit>(u =>
+                {
+                    u.Name = IfcSIUnitName.CUBIC_METRE;
+                    u.UnitType = IfcUnitEnum.VOLUMEUNIT;
+                });
+                _unitsMap.Add("m3", unit);
+            }
+            {   //kilo watt
+                var unit = i.New<IfcSIUnit>(u =>
+                {
+                    u.Name = IfcSIUnitName.WATT;
+                    u.UnitType = IfcUnitEnum.POWERUNIT;
+                    u.Prefix = IfcSIPrefix.KILO;
+                });
+                _unitsMap.Add("kW", unit);
+            }
             //...
 
             // conversion based units

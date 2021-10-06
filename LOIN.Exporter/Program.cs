@@ -52,6 +52,7 @@ namespace LOIN.Exporter
         static Dictionary<string, IfcSIUnitName> ifcSIUnitMap;
         static Dictionary<int, BreakdownItem> breakedownMap; // mapa trid pouzitych v modelu
         // static Dictionary<int, IfcSimplePropertyTemplate> ifcPropertyMap; // mapa vlastnosti pouzitych v modelu
+        static Dictionary<string, IfcSimplePropertyTemplate> ifcPropertyMap; // mapa vlastnosti pouzitych v modelu
         // static Dictionary<int, IfcPropertySetTemplate> ifcPropertySetMap; // mapa skupin vlastnosti pouzitych v modelu
         static Dictionary<int, Reason> reasonsMap; // mapa IfcRelAssignsToControl pouzitych v modelu
         static Dictionary<string, Actor> actorMap; // mapa IfcRelAssignsToActor pouzitych v modelu
@@ -100,13 +101,22 @@ namespace LOIN.Exporter
             //
             breakedownMap = new Dictionary<int, BreakdownItem>(); // prazdna mapa trid, bude plnena postupne
             // ifcPropertyMap = new Dictionary<int, IfcSimplePropertyTemplate>(); // prazdna mapa vlastnosti, bude plnena postupne
+            ifcPropertyMap = new Dictionary<string, IfcSimplePropertyTemplate>(); // prazdna mapa vlastnosti, bude plnena postupne
             // ifcPropertySetMap = new Dictionary<int, IfcPropertySetTemplate>(); // prazdna mapa skupin vlastnosti, bude plnena postupne
             reasonsMap = new Dictionary<int, Reason>(); // prazdna mapa IfcRelAssignsToControl, bude plnena postupne
             actorMap = new Dictionary<string, Actor>(); // prazdna mapa IfcRelAssignsToActor, bude plnena postupne
             milestonesCache = new Dictionary<int, Milestone>(); // prazdna mapa IfcRelAssignsToProcess, bude plnena postupne
 
             //using (var reader = new StreamReader("sfdi_export.csv"))
-            using (var reader = new StreamReader(Console.OpenStandardInput()))
+            Stream csvStream;
+            if (args.Length > 2 && File.Exists(args[2]))
+            {
+                var inputFile = args[2];
+                csvStream = File.OpenRead(inputFile);
+            }
+            else
+                csvStream = Console.OpenStandardInput();
+            using (var reader = new StreamReader(csvStream))
             using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
 
@@ -205,12 +215,6 @@ namespace LOIN.Exporter
                             {
                                 var root = model.CreateBreakedownRoot(record.Par01, null); // "Klasifikace DSS, CCI:ET, CCI:CS, CCI:FS"
 
-                                // set name in default language
-                                root.SetName("en", record.Par01);
-
-                                // set name in other languages
-                                root.SetName("cs", "");
-
                                 breakedownRootMap.Add(record.Par01, root);
                             }
                             else if (record.Method == "IfcProjectLibrary")
@@ -298,16 +302,14 @@ namespace LOIN.Exporter
                                 else
                                     parent = breakedownMap[record.Pid]; // parent class othewise
                                 // Optionally add new class
-                                if (!breakedownMap.ContainsKey(record.Id))
+                                if (!breakedownMap.ContainsKey(record.Id*1000000000+record.Pid))
                                 {
                                     var item = model.CreateBreakedownItem(record.Par02, record.Par03, null, parent);
-                                    breakedownMap.Add(record.Id, item);
-
-                                    // set name in default language
-                                    item.SetName("en", record.Par01);
-
-                                    // set name in other languages
-                                    item.SetName("cs", record.Par02);
+                                    if (!breakedownMap.ContainsKey(record.Id))
+                                    {
+                                        breakedownMap.Add(record.Id, item);
+                                    }
+                                    breakedownMap.Add(record.Id*1000000000+record.Pid,item);
                                 };
                             }
                             else if (record.Method == "IfcRelAssociatesClassification")
@@ -373,9 +375,11 @@ namespace LOIN.Exporter
                             {
                                 // if (!PropertySetReused)
                                 // {
-                                // if (!ifcPropertyMap.TryGetValue(record.Id, out IfcSimplePropertyTemplate propertyTemplate))
-                                // {
-                                var propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
+                             // if (!ifcPropertyMap.TryGetValue(record.Id, out IfcSimplePropertyTemplate propertyTemplate))
+                                if (!ifcPropertyMap.TryGetValue(record.GlobalId, out IfcSimplePropertyTemplate propertyTemplate))
+                                {
+                             // var propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
+                                propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
                                 {
                                         // Set IFC name (often CamelCase or other txt transform)
                                         p.Name = (string.IsNullOrWhiteSpace(record.Ifc02) ? record.Par08 : record.Ifc02); // record.Par08;
@@ -408,12 +412,6 @@ namespace LOIN.Exporter
 
                                     // Set description in other languages
                                     propertyTemplate.SetDescription("cs", record.Par02);
-                                }
-
-                                if (false)
-                                {
-                                    var example = "Example value";
-                                    propertyTemplate.SetExample(currentPropertySet, new IfcText(example));
                                 }
 
                                 if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
@@ -455,15 +453,39 @@ namespace LOIN.Exporter
                                         propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_TIME;
                                         break;
                                     default:
-                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_SINGLEVALUE;
                                         Console.WriteLine("IfcSimplePropertyTemplate: UNKNOWN TEMPLATE TYPE ", record.Par05);
                                         //Program.ifcSPT.TemplateType = ...
                                         break;
                                 };
-                                //     ifcPropertyMap.Add(record.Id, propertyTemplate);
-                                // }
+                                 // ifcPropertyMap.Add(record.Id, propertyTemplate);
+                                    ifcPropertyMap.Add(record.GlobalId, propertyTemplate);
+//Console.WriteLine("IfcSimplePropertyTemplate: NEW " + record.GlobalId + ' ' + record.Id);
+                                }
+//                              else
+//Console.WriteLine("IfcSimplePropertyTemplate: REUSE " + record.GlobalId + ' ' + record.Id);
 
-                                currentPropertySet.HasPropertyTemplates.Add(propertyTemplate);
+                                // property definition may override PSet definition
+                                if (
+                                    !string.IsNullOrWhiteSpace(record.Ifc01) && 
+                                    !string.Equals(record.Ifc01, currentPropertySet.Name, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    var pSet = model.CreatePropertySetTemplate(record.Ifc01, currentPropertySet.Description);
+                                    var pSetNameCS = currentPropertySet.GetName("cs");
+                                    if (!string.IsNullOrWhiteSpace(pSetNameCS)) pSet.SetName("cs", pSetNameCS);
+                                    var pSetNameEN = currentPropertySet.GetName("en");
+                                    if (!string.IsNullOrWhiteSpace(pSetNameEN)) pSet.SetName("en", pSetNameEN);
+                                    var pSetDesctiptionCS = currentPropertySet.GetDescription("cs");
+                                    if (!string.IsNullOrWhiteSpace(pSetDesctiptionCS)) pSet.SetName("cs", pSetDesctiptionCS);
+                                    var pSetDesctiptionEN = currentPropertySet.GetDescription("en");
+                                    if (!string.IsNullOrWhiteSpace(pSetDesctiptionEN)) pSet.SetName("en", pSetDesctiptionEN);
+
+                                    pSet.HasPropertyTemplates.Add(propertyTemplate);
+                                }
+                                else
+                                {
+                                    currentPropertySet.HasPropertyTemplates.Add(propertyTemplate);
+                                }
+
                                 currentPropertyTemplate = propertyTemplate;
                                 currentRequirementsSet.Add(propertyTemplate);
                                 //};
