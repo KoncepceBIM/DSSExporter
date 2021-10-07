@@ -487,21 +487,27 @@ namespace LOIN.Exporter
                                             break;
                                         case "Q_LENGTH":
                                             propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_LENGTH;
+                                            propertyTemplate.PrimaryMeasureType = nameof(IfcLengthMeasure);
                                             break;
                                         case "Q_AREA":
                                             propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_AREA;
+                                            propertyTemplate.PrimaryMeasureType = nameof(IfcAreaMeasure);
                                             break;
                                         case "Q_VOLUME":
                                             propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_VOLUME;
+                                            propertyTemplate.PrimaryMeasureType = nameof(IfcVolumeMeasure);
                                             break;
                                         case "Q_COUNT":
                                             propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_COUNT;
+                                            propertyTemplate.PrimaryMeasureType = nameof(IfcCountMeasure);
                                             break;
                                         case "Q_WEIGHT":
                                             propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_WEIGHT;
+                                            propertyTemplate.PrimaryMeasureType = nameof(IfcMassMeasure);
                                             break;
                                         case "Q_TIME":
                                             propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_TIME;
+                                            propertyTemplate.PrimaryMeasureType = nameof(IfcTimeMeasure);
                                             break;
                                         default:
                                             Console.WriteLine("IfcSimplePropertyTemplate: UNKNOWN TEMPLATE TYPE ", record.Par05);
