@@ -16,7 +16,7 @@ namespace LOIN.Exporter
     internal class UnitMap
     {
         private readonly IModel _model;
-        private readonly Dictionary<string, IfcUnit> _unitsMap = new Dictionary<string, IfcUnit>();
+        private readonly Dictionary<string, IfcUnit> _unitsMap = new Dictionary<string, IfcUnit>(StringComparer.OrdinalIgnoreCase);
 
         public UnitMap(LOIN.Model model)
         {
@@ -185,6 +185,27 @@ namespace LOIN.Exporter
                     u.UnitType = IfcUnitEnum.TIMEUNIT;
                 });
                 _unitsMap.Add("h", hour);
+            }
+            { // degree
+                var rad = i.New<IfcSIUnit>(u =>
+                {
+                    u.Name = IfcSIUnitName.RADIAN;
+                    u.UnitType = IfcUnitEnum.PLANEANGLEUNIT;
+                });
+                var degree = i.New<IfcConversionBasedUnit>(u =>
+                {
+                    u.Name = "°";
+                    u.ConversionFactor = i.New<IfcMeasureWithUnit>(m =>
+                    {
+                        m.ValueComponent = new IfcReal(180.0 / Math.PI);
+                        m.UnitComponent = rad;
+
+                    });
+                    u.Dimensions = i.New<IfcDimensionalExponents>();
+                    u.UnitType = IfcUnitEnum.PLANEANGLEUNIT;
+                });
+                _unitsMap.Add("°", degree);
+                _unitsMap.Add("deg", degree);
             }
             // ...
 

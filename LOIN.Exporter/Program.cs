@@ -55,9 +55,6 @@ namespace LOIN.Exporter
         //https://www.dotnetperls.com/map
         static Dictionary<string, IfcSIUnitName> ifcSIUnitMap;
         static Dictionary<int, BreakdownItem> breakedownMap; // mapa trid pouzitych v modelu
-        // static Dictionary<int, IfcSimplePropertyTemplate> ifcPropertyMap; // mapa vlastnosti pouzitych v modelu
-        static Dictionary<string, IfcSimplePropertyTemplate> ifcPropertyMap; // mapa vlastnosti pouzitych v modelu
-        // static Dictionary<int, IfcPropertySetTemplate> ifcPropertySetMap; // mapa skupin vlastnosti pouzitych v modelu
         static Dictionary<int, Reason> reasonsMap; // mapa IfcRelAssignsToControl pouzitych v modelu
         static Dictionary<string, Actor> actorMap; // mapa IfcRelAssignsToActor pouzitych v modelu
         static Dictionary<int, Milestone> milestonesCache; // mapa IfcRelAssignsToProcess pouzitych v modelu
@@ -100,13 +97,9 @@ namespace LOIN.Exporter
                 { "WATT", IfcSIUnitName.WATT },
                 { "WEBER", IfcSIUnitName.WEBER }
             };
-            //
+
             breakedownRootMap = new Dictionary<string, BreakdownItem>(); // prazdna mapa klasifikaci, bude plnena postupne
-            //
             breakedownMap = new Dictionary<int, BreakdownItem>(); // prazdna mapa trid, bude plnena postupne
-            // ifcPropertyMap = new Dictionary<int, IfcSimplePropertyTemplate>(); // prazdna mapa vlastnosti, bude plnena postupne
-            ifcPropertyMap = new Dictionary<string, IfcSimplePropertyTemplate>(); // prazdna mapa vlastnosti, bude plnena postupne
-            // ifcPropertySetMap = new Dictionary<int, IfcPropertySetTemplate>(); // prazdna mapa skupin vlastnosti, bude plnena postupne
             reasonsMap = new Dictionary<int, Reason>(); // prazdna mapa IfcRelAssignsToControl, bude plnena postupne
             actorMap = new Dictionary<string, Actor>(); // prazdna mapa IfcRelAssignsToActor, bude plnena postupne
             milestonesCache = new Dictionary<int, Milestone>(); // prazdna mapa IfcRelAssignsToProcess, bude plnena postupne
@@ -317,7 +310,7 @@ namespace LOIN.Exporter
                                 if (!breakedownMap.ContainsKey(record.Id * 1000000000 + record.Pid))
                                 {
                                     var item = model.CreateBreakedownItem(record.Par02, record.Par03, null, parent);
-                                    
+
                                     // set name in English
                                     item.SetName("en", record.Par01);
                                     // item.SetDescription("en", record.Par01);
@@ -335,7 +328,12 @@ namespace LOIN.Exporter
                             }
                             else if (record.Method == "IfcRelAssociatesClassification")
                             {
-                                breakedownMap[record.Id].AddToContext(currentRequirementsSet);
+                                if (
+                                    breakedownMap.TryGetValue(record.Id, out var item) ||
+                                    breakedownMap.TryGetValue(record.Id * 1000000000, out item))
+                                {
+                                    item.AddToContext(currentRequirementsSet);
+                                }
                             }
                             else if (record.Method == "IfcRelDeclares")
                             {
@@ -394,144 +392,130 @@ namespace LOIN.Exporter
                             }
                             else if (record.Method == "IfcSimplePropertyTemplate")
                             {
-                                // if (!PropertySetReused)
-                                // {
-                                // if (!ifcPropertyMap.TryGetValue(record.Id, out IfcSimplePropertyTemplate propertyTemplate))
-                                if (!ifcPropertyMap.TryGetValue(record.GlobalId, out IfcSimplePropertyTemplate propertyTemplate))
+                                // var propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
+                                var propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
                                 {
-                                    // var propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
-                                    propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
-                                    {
-                                    // Set IFC name (often CamelCase or other txt transform)
-                                    p.Name = (string.IsNullOrWhiteSpace(record.Ifc02) ? record.Par08 : record.Ifc02); // record.Par08;
+                                        // Set IFC name (often CamelCase or other txt transform)
+                                        p.Name = (string.IsNullOrWhiteSpace(record.Ifc02) ? record.Par08 : record.Ifc02); // record.Par08;
+
+                                        // Set description in primary language
+                                        p.SetName("en", record.Par08);
+
+                                        // Set description in other languages
+                                        p.SetName("cs", record.Par01);
+                                });
+                                if (!string.IsNullOrWhiteSpace(record.GlobalId))
+                                    propertyTemplate.GlobalId = record.GlobalId;
+
+                                // property definition may override PSet definition
+                                if (
+                                    !string.IsNullOrWhiteSpace(record.Ifc01) &&
+                                    !string.Equals(record.Ifc01, currentPropertySet.Name, StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    var pSet = model.CreatePropertySetTemplate(record.Ifc01, currentPropertySet.Description);
+                                    var pSetNameCS = currentPropertySet.GetName("cs");
+                                    if (!string.IsNullOrWhiteSpace(pSetNameCS)) pSet.SetName("cs", pSetNameCS);
+                                    var pSetNameEN = currentPropertySet.GetName("en");
+                                    if (!string.IsNullOrWhiteSpace(pSetNameEN)) pSet.SetName("en", pSetNameEN);
+                                    var pSetDesctiptionCS = currentPropertySet.GetDescription("cs");
+                                    if (!string.IsNullOrWhiteSpace(pSetDesctiptionCS)) pSet.SetName("cs", pSetDesctiptionCS);
+                                    var pSetDesctiptionEN = currentPropertySet.GetDescription("en");
+                                    if (!string.IsNullOrWhiteSpace(pSetDesctiptionEN)) pSet.SetName("en", pSetDesctiptionEN);
+
+                                    // add to the parent property set
+                                    pSet.HasPropertyTemplates.Add(propertyTemplate);
+
+                                    // Examples
+                                    if (!string.IsNullOrWhiteSpace(record.Examp))
+                                        propertyTemplate.SetExample(pSet, new IfcText(record.Examp));
+                                }
+                                else
+                                {
+                                    // add to the parent property set
+                                    currentPropertySet.HasPropertyTemplates.Add(propertyTemplate);
+
+                                    // Examples
+                                    if (!string.IsNullOrWhiteSpace(record.Examp))
+                                        propertyTemplate.SetExample(currentPropertySet, new IfcText(record.Examp));
+                                }
+
+                                // make it current for any subsequent operations
+                                currentPropertyTemplate = propertyTemplate;
+                                // add it to the current requirements set
+                                currentRequirementsSet.Add(propertyTemplate);
+
+                                //Description
+                                if (!string.IsNullOrWhiteSpace(record.Par09))
+                                {
+                                    propertyTemplate.Description = record.Par09;
 
                                     // Set description in primary language
-                                    p.SetName("en", record.Par08);
+                                    propertyTemplate.SetDescription("en", record.Par09);
 
                                     // Set description in other languages
-                                    p.SetName("cs", record.Par01);
-                                    });
-                                    if (!string.IsNullOrWhiteSpace(record.GlobalId))
-                                        propertyTemplate.GlobalId = record.GlobalId;
-
-                                    // property definition may override PSet definition
-                                    if (
-                                        !string.IsNullOrWhiteSpace(record.Ifc01) &&
-                                        !string.Equals(record.Ifc01, currentPropertySet.Name, StringComparison.InvariantCultureIgnoreCase))
-                                    {
-                                        var pSet = model.CreatePropertySetTemplate(record.Ifc01, currentPropertySet.Description);
-                                        var pSetNameCS = currentPropertySet.GetName("cs");
-                                        if (!string.IsNullOrWhiteSpace(pSetNameCS)) pSet.SetName("cs", pSetNameCS);
-                                        var pSetNameEN = currentPropertySet.GetName("en");
-                                        if (!string.IsNullOrWhiteSpace(pSetNameEN)) pSet.SetName("en", pSetNameEN);
-                                        var pSetDesctiptionCS = currentPropertySet.GetDescription("cs");
-                                        if (!string.IsNullOrWhiteSpace(pSetDesctiptionCS)) pSet.SetName("cs", pSetDesctiptionCS);
-                                        var pSetDesctiptionEN = currentPropertySet.GetDescription("en");
-                                        if (!string.IsNullOrWhiteSpace(pSetDesctiptionEN)) pSet.SetName("en", pSetDesctiptionEN);
-
-                                        // add to the parent property set
-                                        pSet.HasPropertyTemplates.Add(propertyTemplate);
-
-                                        // Examples
-                                        if (!string.IsNullOrWhiteSpace(record.Examp))
-                                            propertyTemplate.SetExample(pSet, new IfcText(record.Examp));
-                                    }
-                                    else
-                                    {
-                                        // add to the parent property set
-                                        currentPropertySet.HasPropertyTemplates.Add(propertyTemplate);
-
-                                        // Examples
-                                        if (!string.IsNullOrWhiteSpace(record.Examp)) 
-                                            propertyTemplate.SetExample(currentPropertySet, new IfcText(record.Examp));
-                                    }
-
-                                    // make it current for any subsequent operations
-                                    currentPropertyTemplate = propertyTemplate;
-                                    // add it to the current requirements set
-                                    currentRequirementsSet.Add(propertyTemplate);
-
-                                    //Description
-                                    if (!string.IsNullOrWhiteSpace(record.Par09))
-                                    {
-                                        propertyTemplate.Description = record.Par09;
-
-                                        // Set description in primary language
-                                        propertyTemplate.SetDescription("en", record.Par09);
-
-                                        // Set description in other languages
-                                        propertyTemplate.SetDescription("cs", record.Par02);
-                                    }
-                                    else if (!string.IsNullOrWhiteSpace(record.Par02))
-                                    {
-                                        propertyTemplate.Description = record.Par02;
-
-                                        // Set description in primary language
-                                        propertyTemplate.SetDescription("en", "");
-
-                                        // Set description in other languages
-                                        propertyTemplate.SetDescription("cs", record.Par02);
-                                    }
-
-                                    if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
-                                        propertyTemplate.PrimaryUnit = units[record.Par03];
-                                    if (!string.IsNullOrWhiteSpace(record.Par04)) // nameof(X) -> "X"
-                                        propertyTemplate.PrimaryMeasureType = record.Par04;
-                                    
-                                    //TemplateType
-                                    switch (record.Par05)
-                                    {
-                                        case "P_SINGLEVALUE":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_SINGLEVALUE;
-                                            break;
-                                        case "P_ENUMERATEDVALUE":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_ENUMERATEDVALUE;
-                                            propertyTemplate.Enumerators = enums.GetOrAdd(record.Par06, record.Par07.Split(",", StringSplitOptions.RemoveEmptyEntries)); // { "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"}
-                                            break;
-                                        case "P_REFERENCEVALUE":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_REFERENCEVALUE;
-                                            break;
-                                        case "P_BOUNDEDVALUE":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_BOUNDEDVALUE;
-                                            break;
-                                        case "Q_LENGTH":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_LENGTH;
-                                            propertyTemplate.PrimaryMeasureType = nameof(IfcLengthMeasure);
-                                            break;
-                                        case "Q_AREA":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_AREA;
-                                            propertyTemplate.PrimaryMeasureType = nameof(IfcAreaMeasure);
-                                            break;
-                                        case "Q_VOLUME":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_VOLUME;
-                                            propertyTemplate.PrimaryMeasureType = nameof(IfcVolumeMeasure);
-                                            break;
-                                        case "Q_COUNT":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_COUNT;
-                                            propertyTemplate.PrimaryMeasureType = nameof(IfcCountMeasure);
-                                            break;
-                                        case "Q_WEIGHT":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_WEIGHT;
-                                            propertyTemplate.PrimaryMeasureType = nameof(IfcMassMeasure);
-                                            break;
-                                        case "Q_TIME":
-                                            propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_TIME;
-                                            propertyTemplate.PrimaryMeasureType = nameof(IfcTimeMeasure);
-                                            break;
-                                        default:
-                                            Console.WriteLine("IfcSimplePropertyTemplate: UNKNOWN TEMPLATE TYPE ", record.Par05);
-                                            //Program.ifcSPT.TemplateType = ...
-                                            break;
-                                    };
-                                    // ifcPropertyMap.Add(record.Id, propertyTemplate);
-                                    ifcPropertyMap.Add(record.GlobalId, propertyTemplate);
-                                    //Console.WriteLine("IfcSimplePropertyTemplate: NEW " + record.GlobalId + ' ' + record.Id);
+                                    propertyTemplate.SetDescription("cs", record.Par02);
                                 }
-                                //                              else
-                                //Console.WriteLine("IfcSimplePropertyTemplate: REUSE " + record.GlobalId + ' ' + record.Id);
+                                else if (!string.IsNullOrWhiteSpace(record.Par02))
+                                {
+                                    propertyTemplate.Description = record.Par02;
 
+                                    // Set description in primary language
+                                    propertyTemplate.SetDescription("en", "");
 
-                                //};
+                                    // Set description in other languages
+                                    propertyTemplate.SetDescription("cs", record.Par02);
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
+                                    propertyTemplate.PrimaryUnit = units[record.Par03];
+                                if (!string.IsNullOrWhiteSpace(record.Par04)) // nameof(X) -> "X"
+                                    propertyTemplate.PrimaryMeasureType = record.Par04;
+
+                                //TemplateType
+                                switch (record.Par05)
+                                {
+                                    case "P_SINGLEVALUE":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_SINGLEVALUE;
+                                        break;
+                                    case "P_ENUMERATEDVALUE":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_ENUMERATEDVALUE;
+                                        propertyTemplate.Enumerators = enums.GetOrAdd(record.Par06, record.Par07.Split(",", StringSplitOptions.RemoveEmptyEntries)); // { "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota", "Neděle"}
+                                        break;
+                                    case "P_REFERENCEVALUE":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_REFERENCEVALUE;
+                                        break;
+                                    case "P_BOUNDEDVALUE":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.P_BOUNDEDVALUE;
+                                        break;
+                                    case "Q_LENGTH":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_LENGTH;
+                                        propertyTemplate.PrimaryMeasureType = nameof(IfcLengthMeasure);
+                                        break;
+                                    case "Q_AREA":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_AREA;
+                                        propertyTemplate.PrimaryMeasureType = nameof(IfcAreaMeasure);
+                                        break;
+                                    case "Q_VOLUME":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_VOLUME;
+                                        propertyTemplate.PrimaryMeasureType = nameof(IfcVolumeMeasure);
+                                        break;
+                                    case "Q_COUNT":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_COUNT;
+                                        propertyTemplate.PrimaryMeasureType = nameof(IfcCountMeasure);
+                                        break;
+                                    case "Q_WEIGHT":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_WEIGHT;
+                                        propertyTemplate.PrimaryMeasureType = nameof(IfcMassMeasure);
+                                        break;
+                                    case "Q_TIME":
+                                        propertyTemplate.TemplateType = IfcSimplePropertyTemplateTypeEnum.Q_TIME;
+                                        propertyTemplate.PrimaryMeasureType = nameof(IfcTimeMeasure);
+                                        break;
+                                    default:
+                                        Console.WriteLine("IfcSimplePropertyTemplate: UNKNOWN TEMPLATE TYPE ", record.Par05);
+                                        //Program.ifcSPT.TemplateType = ...
+                                        break;
+                                };
                             }
                             else if (record.Method == "IfcSIUnit")
                             {
