@@ -317,6 +317,15 @@ namespace LOIN.Exporter
                                 if (!breakedownMap.ContainsKey(record.Id * 1000000000 + record.Pid))
                                 {
                                     var item = model.CreateBreakedownItem(record.Par02, record.Par03, null, parent);
+                                    
+                                    // set name in English
+                                    item.SetName("en", record.Par01);
+                                    // item.SetDescription("en", record.Par01);
+
+                                    // set name in Czech
+                                    item.SetName("cs", record.Par02);
+                                    // item.SetDescription("cs", record.Par02);
+
                                     if (!breakedownMap.ContainsKey(record.Id))
                                     {
                                         breakedownMap.Add(record.Id, item);
