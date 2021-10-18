@@ -314,22 +314,6 @@ namespace LOIN.Exporter
                                     parent = breakedownMap[record.Pid];
                                 }
 
-                                // it is a predefined type, we need to inject the parent
-                                if (
-                                    string.Equals(record.Par09, "DSS", StringComparison.OrdinalIgnoreCase) && 
-                                    !string.IsNullOrWhiteSpace(record.Ifc01) && 
-                                    !string.Equals(parent.Name, record.Ifc01)
-                                    )
-                                {
-                                    var id = $"{record.Pid}_{record.Ifc01}";
-                                    if (!injectedBreakedownMap.TryGetValue(id, out var injectedParent))
-                                    {
-                                        injectedParent = model.CreateBreakedownItem(record.Ifc01, record.Ifc01, null, parent);
-                                        injectedBreakedownMap.Add(id, injectedParent);
-                                        parent = injectedParent;
-                                    }
-                                }
-
                                 // Optionally add new class
                                 if (!breakedownMap.ContainsKey(record.Id * 1000000000 + record.Pid))
                                 {
