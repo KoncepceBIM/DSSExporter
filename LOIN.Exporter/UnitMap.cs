@@ -204,7 +204,14 @@ namespace LOIN.Exporter
                     u.Dimensions = i.New<IfcDimensionalExponents>();
                     u.UnitType = IfcUnitEnum.PLANEANGLEUNIT;
                 });
-                _unitsMap.Add("°", degree);
+                var compoundAngle = i.New<IfcDerivedUnit>(du => {
+                    du.UnitType = IfcDerivedUnitEnum.COMPOUNDPLANEANGLEUNIT;
+                    du.Elements.Add(i.New<IfcDerivedUnitElement>(e => {
+                        e.Unit = degree;
+                        e.Exponent = 0;
+                    }));
+                });
+                _unitsMap.Add("°", compoundAngle);
                 _unitsMap.Add("deg", degree);
             }
             // ...

@@ -55,6 +55,8 @@ namespace LOIN.Exporter
         //https://www.dotnetperls.com/map
         static Dictionary<string, IfcSIUnitName> ifcSIUnitMap;
         static Dictionary<int, BreakdownItem> breakedownMap; // mapa trid pouzitych v modelu
+        // mapa trid pouzitych v modelu
+        static Dictionary<string, BreakdownItem> injectedBreakedownMap = new Dictionary<string, BreakdownItem>(); 
         static Dictionary<int, Reason> reasonsMap; // mapa IfcRelAssignsToControl pouzitych v modelu
         static Dictionary<string, Actor> actorMap; // mapa IfcRelAssignsToActor pouzitych v modelu
         static Dictionary<int, Milestone> milestonesCache; // mapa IfcRelAssignsToProcess pouzitych v modelu
@@ -301,23 +303,48 @@ namespace LOIN.Exporter
                                 // Class within classification
                                 // Set parent
                                 BreakdownItem parent = null;
-                                if (record.Par04 == "")
-                                    //Program.ifcCRS = Program.ifcCL; // classification for root class
-                                    parent = breakedownRootMap[record.Par09]; // classification for root class
+                                if (string.IsNullOrWhiteSpace(record.Par04))
+                                {
+                                    // classification for root class
+                                    parent = breakedownRootMap[record.Par09];
+                                }
                                 else
-                                    parent = breakedownMap[record.Pid]; // parent class othewise
+                                {
+                                    // parent class othewise
+                                    parent = breakedownMap[record.Pid];
+                                }
+
+                                // it is a predefined type, we need to inject the parent
+                                if (
+                                    string.Equals(record.Par09, "DSS", StringComparison.OrdinalIgnoreCase) && 
+                                    !string.IsNullOrWhiteSpace(record.Ifc01) && 
+                                    !string.Equals(parent.Name, record.Ifc01)
+                                    )
+                                {
+                                    var id = $"{record.Pid}_{record.Ifc01}";
+                                    if (!injectedBreakedownMap.TryGetValue(id, out var injectedParent))
+                                    {
+                                        injectedParent = model.CreateBreakedownItem(record.Ifc01, record.Ifc01, null, parent);
+                                        injectedBreakedownMap.Add(id, injectedParent);
+                                        parent = injectedParent;
+                                    }
+                                }
+
                                 // Optionally add new class
                                 if (!breakedownMap.ContainsKey(record.Id * 1000000000 + record.Pid))
                                 {
-                                    var item = model.CreateBreakedownItem(record.Par02, record.Par03, null, parent);
+                                    var name = record.Par01;
+                                    if (!string.IsNullOrWhiteSpace(record.Aux01))
+                                        name = record.Aux01;
+                                    var item = model.CreateBreakedownItem(name, record.Par03, record.Par07, parent);
 
-                                    // set name in English
+                                    // set name and description in English
                                     item.SetName("en", record.Par01);
-                                    // item.SetDescription("en", record.Par01);
+                                    item.SetDescription("en", record.Par07);
 
-                                    // set name in Czech
+                                    // set name and description in Czech
                                     item.SetName("cs", record.Par02);
-                                    // item.SetDescription("cs", record.Par02);
+                                    item.SetDescription("cs", record.Par06);
 
                                     if (!breakedownMap.ContainsKey(record.Id))
                                     {
@@ -466,10 +493,28 @@ namespace LOIN.Exporter
                                     propertyTemplate.SetDescription("cs", record.Par02);
                                 }
 
-                                if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
-                                    propertyTemplate.PrimaryUnit = units[record.Par03];
                                 if (!string.IsNullOrWhiteSpace(record.Par04)) // nameof(X) -> "X"
                                     propertyTemplate.PrimaryMeasureType = record.Par04;
+
+                                if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
+                                {
+                                    if (string.Equals(propertyTemplate.PrimaryMeasureType, "IfcCompoundPlaneAngleMeasure", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        propertyTemplate.PrimaryUnit = units["°"];
+                                    }
+                                    else if (
+                                        (string.Equals(propertyTemplate.PrimaryMeasureType, "IfcPlaneAngleMeasure", StringComparison.OrdinalIgnoreCase) ||
+                                        string.Equals(propertyTemplate.PrimaryMeasureType, "IfcPositivePlaneAngleMeasure", StringComparison.OrdinalIgnoreCase)) &&
+                                        string.Equals(record.Par03, "°")
+                                        )
+                                    {
+                                        propertyTemplate.PrimaryUnit = units["deg"];
+                                    }
+                                    else
+                                    { 
+                                        propertyTemplate.PrimaryUnit = units[record.Par03];
+                                    }
+                                }
 
                                 //TemplateType
                                 switch (record.Par05)
