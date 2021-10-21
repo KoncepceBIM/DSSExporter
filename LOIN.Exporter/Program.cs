@@ -480,6 +480,10 @@ namespace LOIN.Exporter
                                 if (!string.IsNullOrWhiteSpace(record.Par04)) // nameof(X) -> "X"
                                     propertyTemplate.PrimaryMeasureType = record.Par04;
 
+                                // measure type in natural language (cs)
+                                // if (!string.IsNullOrWhiteSpace(record.XXX))
+                                //     propertyTemplate.SetDataTypeName("cs", record.XXX);
+
                                 if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
                                 {
                                     if (string.Equals(propertyTemplate.PrimaryMeasureType, "IfcCompoundPlaneAngleMeasure", StringComparison.OrdinalIgnoreCase))
