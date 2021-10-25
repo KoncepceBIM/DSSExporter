@@ -481,8 +481,8 @@ namespace LOIN.Exporter
                                     propertyTemplate.PrimaryMeasureType = record.Par04;
 
                                 // measure type in natural language (cs)
-                                // if (!string.IsNullOrWhiteSpace(record.XXX))
-                                //     propertyTemplate.SetDataTypeName("cs", record.XXX);
+                                if (!string.IsNullOrWhiteSpace(record.Aux01))
+                                    propertyTemplate.SetDataTypeName("cs", record.Aux01);
 
                                 if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
                                 {
