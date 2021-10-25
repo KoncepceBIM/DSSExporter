@@ -56,7 +56,7 @@ namespace LOIN.Exporter
         static Dictionary<string, IfcSIUnitName> ifcSIUnitMap;
         static Dictionary<int, BreakdownItem> breakedownMap; // mapa trid pouzitych v modelu
         // mapa trid pouzitych v modelu
-        static Dictionary<string, BreakdownItem> injectedBreakedownMap = new Dictionary<string, BreakdownItem>(); 
+        static Dictionary<string, BreakdownItem> injectedBreakedownMap = new Dictionary<string, BreakdownItem>();
         static Dictionary<int, Reason> reasonsMap; // mapa IfcRelAssignsToControl pouzitych v modelu
         static Dictionary<string, Actor> actorMap; // mapa IfcRelAssignsToActor pouzitych v modelu
         static Dictionary<int, Milestone> milestonesCache; // mapa IfcRelAssignsToProcess pouzitych v modelu
@@ -320,11 +320,11 @@ namespace LOIN.Exporter
                                     var name = record.Par01;
                                     if (!string.IsNullOrWhiteSpace(record.Aux01))
                                         name = record.Aux01;
-                                    var item = model.CreateBreakedownItem(name, record.Par03, record.Par07, parent);
+                                    var item = model.CreateBreakedownItem(name, record.Par03, record.Par05, parent);
 
                                     // set name and description in English
                                     item.SetName("en", record.Par01);
-                                    item.SetDescription("en", record.Par07);
+                                    item.SetDescription("en", record.Par05);
 
                                     // set name and description in Czech
                                     item.SetName("cs", record.Par02);
@@ -499,7 +499,7 @@ namespace LOIN.Exporter
                                         propertyTemplate.PrimaryUnit = units["deg"];
                                     }
                                     else
-                                    { 
+                                    {
                                         propertyTemplate.PrimaryUnit = units[record.Par03];
                                     }
                                 }
