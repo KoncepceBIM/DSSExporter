@@ -484,6 +484,9 @@ namespace LOIN.Exporter
                                 if (!string.IsNullOrWhiteSpace(record.Aux01))
                                     propertyTemplate.SetDataTypeName("cs", record.Aux01);
 
+                                // if (!string.IsNullOrWhiteSpace(record.XXX))
+                                //     propertyTemplate.SetNote("cs", record.XXX);
+
                                 if (!string.IsNullOrWhiteSpace(record.Par03)) // dataunit
                                 {
                                     if (string.Equals(propertyTemplate.PrimaryMeasureType, "IfcCompoundPlaneAngleMeasure", StringComparison.OrdinalIgnoreCase))
