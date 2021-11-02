@@ -330,6 +330,13 @@ namespace LOIN.Exporter
                                     item.SetName("cs", record.Par02);
                                     item.SetDescription("cs", record.Par06);
 
+                                    // set notes
+                                    if(!string.IsNullOrWhiteSpace(record.Par07))
+                                        item.SetNote("en", record.Par07);
+                                    if(!string.IsNullOrWhiteSpace(record.Par08))
+                                        item.SetNote("cs", record.Par08);
+
+
                                     if (!breakedownMap.ContainsKey(record.Id))
                                     {
                                         breakedownMap.Add(record.Id, item);
@@ -406,14 +413,14 @@ namespace LOIN.Exporter
                                 // var propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
                                 var propertyTemplate = model.New<IfcSimplePropertyTemplate>(p =>
                                 {
-                                        // Set IFC name (often CamelCase or other txt transform)
-                                        p.Name = (string.IsNullOrWhiteSpace(record.Ifc02) ? record.Par08 : record.Ifc02); // record.Par08;
+                                    // Set IFC name (often CamelCase or other txt transform)
+                                    p.Name = (string.IsNullOrWhiteSpace(record.Ifc02) ? record.Par08 : record.Ifc02); // record.Par08;
 
-                                        // Set description in primary language
-                                        p.SetName("en", record.Par08);
+                                    // Set description in primary language
+                                    p.SetName("en", record.Par08);
 
-                                        // Set description in other languages
-                                        p.SetName("cs", record.Par01);
+                                    // Set description in other languages
+                                    p.SetName("cs", record.Par01);
                                 });
                                 if (!string.IsNullOrWhiteSpace(record.GlobalId))
                                     propertyTemplate.GlobalId = record.GlobalId;
