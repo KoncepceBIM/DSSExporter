@@ -336,6 +336,17 @@ namespace LOIN.Exporter
                                     if(!string.IsNullOrWhiteSpace(record.Par08))
                                         item.SetNote("cs", record.Par08);
 
+                                    if (
+                                        !string.IsNullOrWhiteSpace(record.Ifc01) && 
+                                        record.Ifc01.StartsWith("ifc", StringComparison.OrdinalIgnoreCase) &&
+                                        item.Entity is IfcClassificationReference cref)
+                                    {
+                                        cref.SetIFCType(record.Ifc01);
+
+                                        if (!string.IsNullOrWhiteSpace(record.Aux01))
+                                            cref.SetIFCPredefinedType(record.Aux01);
+                                    }
+
 
                                     if (!breakedownMap.ContainsKey(record.Id))
                                     {
