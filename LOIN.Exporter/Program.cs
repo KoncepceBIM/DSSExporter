@@ -320,7 +320,7 @@ namespace LOIN.Exporter
                                     var name = record.Par01;
                                     if (!string.IsNullOrWhiteSpace(record.Aux01))
                                         name = record.Aux01;
-                                    var item = model.CreateBreakedownItem(name, record.Par03, record.Par05, parent);
+                                    var item = model.CreateBreakedownItem(name, record.GlobalId, record.Par05, parent);
 
                                     // set name and description in English
                                     item.SetName("en", record.Par01);
