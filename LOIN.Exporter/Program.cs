@@ -39,6 +39,12 @@ namespace LOIN.Exporter
         public string Aux01 { get; set; }
         public string Aux02 { get; set; }
         public string Aux03 { get; set; }
+        public string CciSE { get; set; } // Stavebni entity   
+        public string CciVS { get; set; } // Vybudovane systemy
+        public string CciFS { get; set; } // Funkcni systemy   
+        public string CciTS { get; set; } // Technicke systemy 
+        public string CciKo { get; set; } // Komponenty        
+        public string CciSK { get; set; } // Stavebni komplexy 
     }
 
     class Program
@@ -146,6 +152,12 @@ namespace LOIN.Exporter
                     Aux01 = csv.GetField("Aux01"),
                     Aux02 = csv.GetField("Aux02"),
                     Aux03 = csv.GetField("Aux03"),
+                    CciSE = csv.GetField("CciSE"),
+                    CciVS = csv.GetField("CciVS"),
+                    CciFS = csv.GetField("CciFS"),
+                    CciTS = csv.GetField("CciTS"),
+                    CciKo = csv.GetField("CciKo"),
+                    CciSK = csv.GetField("CciSK"),
                 };
                 records.Add(record);
 
@@ -214,6 +226,12 @@ namespace LOIN.Exporter
                                 Aux01 = csv.GetField("Aux01"),
                                 Aux02 = csv.GetField("Aux02"),
                                 Aux03 = csv.GetField("Aux03"),
+                                CciSE = csv.GetField("CciSE"),
+                                CciVS = csv.GetField("CciVS"),
+                                CciFS = csv.GetField("CciFS"),
+                                CciTS = csv.GetField("CciTS"),
+                                CciKo = csv.GetField("CciKo"),
+                                CciSK = csv.GetField("CciSK"),
                             };
                             records.Add(record);
                             //Console.WriteLine(record.Method);
@@ -331,13 +349,13 @@ namespace LOIN.Exporter
                                     item.SetDescription("cs", record.Par06);
 
                                     // set notes
-                                    if(!string.IsNullOrWhiteSpace(record.Par07))
+                                    if (!string.IsNullOrWhiteSpace(record.Par07))
                                         item.SetNote("en", record.Par07);
-                                    if(!string.IsNullOrWhiteSpace(record.Par08))
+                                    if (!string.IsNullOrWhiteSpace(record.Par08))
                                         item.SetNote("cs", record.Par08);
 
                                     if (
-                                        !string.IsNullOrWhiteSpace(record.Ifc01) && 
+                                        !string.IsNullOrWhiteSpace(record.Ifc01) &&
                                         record.Ifc01.StartsWith("ifc", StringComparison.OrdinalIgnoreCase) &&
                                         item.Entity is IfcClassificationReference cref)
                                     {
