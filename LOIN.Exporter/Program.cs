@@ -354,18 +354,31 @@ namespace LOIN.Exporter
                                     if (!string.IsNullOrWhiteSpace(record.Par08))
                                         item.SetNote("cs", record.Par08);
 
-                                    if (
-                                        !string.IsNullOrWhiteSpace(record.Ifc01) &&
-                                        record.Ifc01.StartsWith("ifc", StringComparison.OrdinalIgnoreCase) &&
-                                        item.Entity is IfcClassificationReference cref)
+                                    if (item.Entity is IfcClassificationReference cref)
                                     {
-                                        cref.SetIFCType(record.Ifc01);
+                                        if ( !string.IsNullOrWhiteSpace(record.Ifc01) &&
+                                        record.Ifc01.StartsWith("ifc", StringComparison.OrdinalIgnoreCase)
+                                        )
+                                        {
+                                            cref.SetIFCType(record.Ifc01);
 
-                                        if (!string.IsNullOrWhiteSpace(record.Aux01))
-                                            cref.SetIFCPredefinedType(record.Aux01);
+                                            if (!string.IsNullOrWhiteSpace(record.Aux01))
+                                                cref.SetIFCPredefinedType(record.Aux01);
+                                        }
+                                        if (!string.IsNullOrWhiteSpace(record.CciFS))
+                                            cref.SetCCI_FS("cs", record.CciFS);
+                                        if (!string.IsNullOrWhiteSpace(record.CciKo))
+                                            cref.SetCCI_KO("cs", record.CciKo);
+                                        if (!string.IsNullOrWhiteSpace(record.CciSE))
+                                            cref.SetCCI_SE("cs", record.CciSE);
+                                        if (!string.IsNullOrWhiteSpace(record.CciSK))
+                                            cref.SetCCI_SK("cs", record.CciSK);
+                                        if (!string.IsNullOrWhiteSpace(record.CciTS))
+                                            cref.SetCCI_TS("cs", record.CciTS);
+                                        if (!string.IsNullOrWhiteSpace(record.CciVS))
+                                            cref.SetCCI_VS("cs", record.CciVS);
                                     }
-
-
+                                    
                                     if (!breakedownMap.ContainsKey(record.Id))
                                     {
                                         breakedownMap.Add(record.Id, item);
